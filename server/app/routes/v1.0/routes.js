@@ -25,6 +25,7 @@ var auth = require('./routes_authentication');
 var chef = require('./routes_chef.js');
 var users = require('./routes_users');
 var d4dMasters = require('./routes_d4dMasters');
+var d4dMastersCICD = require('./routes_d4dMastersCICD');
 var organizations = require('./routes_organizations');
 var projects = require('./routes_projects');
 var blueprints = require('./routes_blueprints');
@@ -80,7 +81,8 @@ module.exports.setRoutes = function(app) {
     var adminSessionVerificationFunc = verificationFunctions.adminSessionVerificationFunc;
 
     d4dMasters.setRoutes(app, sessionVerificationFunc);
-
+    d4dMastersCICD.setRoutes(app);
+    
     organizations.setRoutes(app, sessionVerificationFunc);
 
     projects.setRoutes(app, sessionVerificationFunc);
