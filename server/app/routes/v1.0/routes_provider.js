@@ -120,12 +120,11 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 			}
 			if (aProvider) {
 				AWSKeyPair.getAWSKeyPairByProviderId(aProvider._id, function(err, keyPair) {
-					masterUtil.getOrgById(aProvider.orgId[0], function(err, orgs) {
+					masterUtil.getOrgByRowId(aProvider.orgId[0], function(err, orgs) {
 						if (err) {
 							res.status(500).send("Not able to fetch org.");
 							return;
 						}
-
 						if (orgs.length > 0) {
 							if (keyPair) {
 								var dommyProvider = {
@@ -151,6 +150,41 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 		});
 	});
 
+	app.get('/aws/providers/organizations/:orgId', function(req, res) {
+		var orgId = req.params.orgId.trim();
+		if (typeof orgId === 'undefined' || orgId === null) {
+			logger.debug("Org Id is not there");
+			res.status(500).send([]);
+			return;
+		}
+		AWSProvider.getAWSProvidersByOrgId(orgId, function(err, providers) {
+			if (err) {
+				logger.error(err);
+				res.status(500).send(errorResponses.db.error);
+				return;
+			}else if (providers.length > 0) {
+				var providerList = [];
+				for(var i = 0;i < providers.length;i++) {
+					var providerObj = {
+						_id: providers[i]._id,
+						id: 9,
+						providerName: providers[i].providerName,
+						providerType: providers[i].providerType,
+						s3BucketName: providers[i].s3BucketName,
+						orgId: providers[i].orgId
+					};
+					providerList.push(providerObj);
+					providerObj ={};
+					if(providerList.length === providers.length) {
+						res.send(providerList);
+					}
+				}
+			} else {
+				res.send(404);
+			}
+		});
+	});
+
 	app.all("/aws/providers/*", sessionVerificationFunc);
 	var cryptoConfig = appConfig.cryptoSettings;
 	var cryptography = new Cryptography(cryptoConfig.algorithm, cryptoConfig.password);
@@ -166,7 +200,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 		var vmwarehost = req.body.vmwarehost;
 		var vmwaredc = req.body.vmwaredc;
 		var providerName = req.body.providerName;
-		var providerType = req.body.providerType.toLowerCase();
+		var providerType = req.body.providerType;
 		var pemFileName = null;
 		if(req.files && req.files.azurepem)
 			pemFileName = req.files.azurepem.originalFilename;
@@ -253,7 +287,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 								res.status(500).send("Failed to create Provider.");
 								return;
 							}
-							masterUtil.getOrgById(providerData.orgId, function(err, orgs) {
+							masterUtil.getOrgByRowId(providerData.orgId, function(err, orgs) {
 								if (err) {
 									res.status(500).send("Not able to fetch org.");
 									return;
@@ -385,7 +419,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 				return;
 			}
 			if (aProvider) {
-				masterUtil.getOrgById(aProvider.orgId[0], function(err, orgs) {
+				masterUtil.getOrgByRowId(aProvider.orgId[0], function(err, orgs) {
 					if (err) {
 						res.status(500).send("Not able to fetch org.");
 						return;
@@ -534,7 +568,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 					res.status(500).send(errorResponses.db.error);
 					return;
 				}
-				masterUtil.getOrgById(providerData.orgId, function(err, orgs) {
+				masterUtil.getOrgByRowId(providerData.orgId, function(err, orgs) {
 					if (err) {
 						res.status(500).send("Not able to fetch org.");
 						return;
@@ -750,7 +784,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 								return;
 							}
 
-							masterUtil.getOrgById(providerData.orgId, function(err, orgs) {
+							masterUtil.getOrgByRowId(providerData.orgId, function(err, orgs) {
 								if (err) {
 									res.status(500).send("Not able to fetch org.");
 									return;
@@ -882,7 +916,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 			}
 			if (aProvider) {
 
-				masterUtil.getOrgById(aProvider.orgId[0], function(err, orgs) {
+				masterUtil.getOrgByRowId(aProvider.orgId[0], function(err, orgs) {
 					if (err) {
 						res.status(500).send("Not able to fetch org.");
 						return;
@@ -1029,7 +1063,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 							res.status(500).send(errorResponses.db.error);
 							return;
 						}
-						masterUtil.getOrgById(providerData.orgId, function(err, orgs) {
+						masterUtil.getOrgByRowId(providerData.orgId, function(err, orgs) {
 							if (err) {
 								res.status(500).send("Not able to fetch org.");
 								return;
@@ -1154,7 +1188,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 		var azureTenantId = req.body.azureTenantId;
 
 		var providerName = req.body.providerName;
-		var providerType = req.body.providerType.toLowerCase();
+		var providerType = req.body.providerType;
 		var pemFileName = null;
 		if(req.files && req.files.azurepem)
 			pemFileName = req.files.azurepem.originalFilename;
@@ -1243,7 +1277,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 								return;
 							}
 
-							masterUtil.getOrgById(providerData.orgId, function(err, orgs) {
+							masterUtil.getOrgByRowId(providerData.orgId, function(err, orgs) {
 								if (err) {
 									res.status(500).send("Not able to fetch org.");
 									return;
@@ -1384,7 +1418,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 				logger.debug(aProvider);
 				aProvider = JSON.parse(aProvider)
 				logger.debug(aProvider.orgId);
-				masterUtil.getOrgById(aProvider.orgId[0], function(err, orgs) {
+				masterUtil.getOrgByRowId(aProvider.orgId[0], function(err, orgs) {
 					if (err) {
 						res.status(500).send("Not able to fetch org.");
 						return;
@@ -1439,7 +1473,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 					res.status(500).send(errorResponses.db.error);
 					return;
 				}
-				masterUtil.getOrgById(providerData.orgId, function(err, orgs) {
+				masterUtil.getOrgByRowId(providerData.orgId, function(err, orgs) {
 					if (err) {
 						res.status(500).send("Not able to fetch org.");
 						return;
@@ -1736,7 +1770,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 								return;
 							}
 
-							masterUtil.getOrgById(providerData.orgId, function(err, orgs) {
+							masterUtil.getOrgByRowId(providerData.orgId, function(err, orgs) {
 								if (err) {
 									res.status(500).send("Not able to fetch org.");
 									return;
@@ -1870,7 +1904,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 			}
 			if (aProvider) {
 
-				masterUtil.getOrgById(aProvider.orgId[0], function(err, orgs) {
+				masterUtil.getOrgByRowId(aProvider.orgId[0], function(err, orgs) {
 					if (err) {
 						res.status(500).send("Not able to fetch org.");
 						return;
@@ -1965,7 +1999,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 					res.status(500).send(errorResponses.db.error);
 					return;
 				}
-				masterUtil.getOrgById(providerData.orgId, function(err, orgs) {
+				masterUtil.getOrgByRowId(providerData.orgId, function(err, orgs) {
 					if (err) {
 						res.status(500).send("Not able to fetch org.");
 						return;
@@ -2280,7 +2314,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 														return;
 													}
 													AWSKeyPair.createNew(req, provider._id, function (err, keyPair) {
-														masterUtil.getOrgById(providerData.orgId, function (err, orgs) {
+														masterUtil.getOrgByRowId(providerData.orgId, function (err, orgs) {
 															if (err) {
 																res.status(500).send("Not able to fetch org.");
 																return;

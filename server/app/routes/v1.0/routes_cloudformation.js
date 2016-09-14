@@ -28,6 +28,9 @@ var logger = require('_pr/logger')(module);
 var instancesDao = require('_pr/model/classes/instance/instance');
 var configmgmtDao = require('_pr/model/d4dmasters/configmgmt');
 var Chef = require('_pr/lib/chef.js');
+var containerDao = require('_pr/model/container');
+var logsDao = require('_pr/model/dao/logsdao.js');
+var instanceLogModel = require('_pr/model/log-trail/instanceLog.js');
 
 module.exports.setRoutes = function(app, sessionVerificationFunc) {
 
@@ -71,19 +74,6 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
 
     app.delete('/cloudformation/:cfId', function(req, res) {
 
-        function removeInstanceFromDb(instanceId) {
-            instancesDao.removeInstancebyId(req.params.instanceId, function(err, data) {
-                if (err) {
-                    logger.error("Instance deletion Failed >> ", err);
-                    res.status(500).send(errorResponses.db.error);
-                    return;
-                }
-                logger.debug("Exit delete() for /instances/%s", req.params.instanceid);
-                res.send(200);
-            });
-        }
-
-
         CloudFormation.getById(req.params.cfId, function(err, cloudFormation) {
             if (err) {
                 res.status(500).send(errorResponses.db.error);
@@ -97,7 +87,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
                     }
 
                     var awsSettings;
-                    if(aProvider.isDefault) {
+                    if (aProvider.isDefault) {
                         awsSettings = {
                             "isDefault": true,
                             "region": cloudFormation.region
@@ -120,7 +110,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
                     }
 
                     var awsCF = new AWSCloudFormation(awsSettings);
-                    awsCF.deleteStack(cloudFormation.stackId, function (err, deletedStack) {
+                    awsCF.deleteStack(cloudFormation.stackId, function(err, deletedStack) {
                         if (err) {
                             logger.error("Unable to delete stack from aws", err);
                             res.status(500).send({
@@ -129,7 +119,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
                             });
                             return;
                         }
-                        configmgmtDao.getChefServerDetails(cloudFormation.infraManagerId, function (err, chefDetails) {
+                        configmgmtDao.getChefServerDetails(cloudFormation.infraManagerId, function(err, chefDetails) {
                             if (err) {
                                 logger.debug("Failed to fetch ChefServerDetails ", err);
                                 res.status(500).send(errorResponses.chef.corruptChefData);
@@ -142,51 +132,95 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
                                 chefValidationPemFile: chefDetails.validatorpemfile,
                                 hostedChefUrl: chefDetails.url,
                             });
-                            instancesDao.getInstancesByCloudformationId(cloudFormation.id, function (err, instances) {
+                            instancesDao.getInstancesByCloudformationId(cloudFormation.id, function(err, instances) {
                                 if (err) {
                                     res.status(500).send(errorResponses.db.error);
                                     return;
                                 }
                                 var instanceIds = [];
-                                for (var i = 0; i < instances.length; i++) {
-                                    instanceIds.push(instances[i].id);
-                                    chef.deleteNode(instances[i].chef.chefNodeName, function (err, nodeData) {
-                                        if (err) {
-                                            logger.debug("Failed to delete node ", err);
-                                            if (err.chefStatusCode && err.chefStatusCode === 404) {
-
-                                            } else {
-
+                                if(instances.length > 0) {
+                                    for (var i = 0; i < instances.length; i++) {
+                                        (function(instance) {
+                                            instanceIds.push(instance.id);
+                                            chef.deleteNode(instance.chef.chefNodeName, function (err, nodeData) {
+                                                if (err) {
+                                                    logger.debug("Failed to delete node ", err);
+                                                    return;
+                                                }
+                                                logger.debug("Successfully removed instance from chef Server.");
+                                            });
+                                            containerDao.deleteContainerByInstanceId(instance.id, function (err, container) {
+                                                if (err) {
+                                                    logger.error("Container deletion Failed >> ", err);
+                                                    return;
+                                                }
+                                            });
+                                            var instanceLog = {
+                                                actionId: "",
+                                                instanceId: instance._id,
+                                                orgName: instance.orgName,
+                                                bgName: instance.bgName,
+                                                projectName: instance.projectName,
+                                                envName: instance.environmentName,
+                                                status: 'shutting-down',
+                                                actionStatus: "success",
+                                                platformId: instance.platformId,
+                                                blueprintName: instance.blueprintData.blueprintName,
+                                                data: instance.runlist,
+                                                platform: instance.hardware.platform,
+                                                os: instance.hardware.os,
+                                                size: instance.instanceType,
+                                                user: req.session.user.cn,
+                                                createdOn: new Date().getTime(),
+                                                startedOn: new Date().getTime(),
+                                                providerType: instance.providerType,
+                                                action: "Shutting-Down",
+                                                logs: []
+                                            };
+                                            var timestampStarted = new Date().getTime();
+                                            var actionLog = instancesDao.insertDeleteActionLog(instance._id, req.session.user.cn, timestampStarted);
+                                            var logReferenceIds = [instance._id];
+                                            if (actionLog) {
+                                                logReferenceIds.push(actionLog._id);
                                             }
-                                            return;
-                                        }
-                                        logger.debug("Successfully removed instance from db.");
-                                    });
+                                            logsDao.insertLog({
+                                                referenceId: logReferenceIds,
+                                                err: false,
+                                                log: "Instance Shutting-Down",
+                                                timestamp: timestampStarted
+                                            });
+                                            instanceLog.actionId = actionLog._id;
+                                            instanceLog.logs = {
+                                                err: false,
+                                                log: "Instance Shutting-Down",
+                                                timestamp: new Date().getTime()
+                                            };
+                                            instanceLogModel.createOrUpdate(actionLog._id, instance._id, instanceLog, function(err, logData) {
+                                                if (err) {
+                                                    logger.error("Failed to create or update instanceLog: ", err);
+                                                }
+                                            });
+                                            instancesDao.updateInstanceStatus(instance._id, instanceLog, function(err, instanceData) {
+                                                if (err) {
+                                                    logger.error("Failed to update instance: ", err);
+                                                }
+                                            });
+                                        })(instances[i]);
+                                    }
                                 }
-
-                                instancesDao.removeInstancebyCloudFormationId(cloudFormation.id, function (err, deletedData) {
+                                CloudFormation.removeById(cloudFormation.id, function(err, deletedStack) {
                                     if (err) {
-                                        logger.error("Unable to delete stack instances from db", err);
+                                        logger.error("Unable to delete stack from db", err);
                                         res.status(500).send({
-                                            message: "Unable to delete stack from aws"
+                                            message: "Unable to delete stack from db"
                                         });
                                         return;
                                     }
-                                    CloudFormation.removeById(cloudFormation.id, function (err, deletedStack) {
-                                        if (err) {
-                                            logger.error("Unable to delete stack from db", err);
-                                            res.status(500).send({
-                                                message: "Unable to delete stack from db"
-                                            });
-                                            return;
-                                        }
-                                        res.send(200, {
-                                            message: "deleted",
-                                            instanceIds: instanceIds
-                                        });
+                                    res.send(200, {
+                                        message: "deleted",
+                                        instanceIds: instanceIds
                                     });
                                 });
-
                             });
                         });
                     });
@@ -236,7 +270,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
                     }
 
                     var awsSettings;
-                    if(aProvider.isDefault) {
+                    if (aProvider.isDefault) {
                         awsSettings = {
                             "isDefault": true,
                             "region": cloudFormation.region
@@ -259,7 +293,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
                     }
 
                     var awsCF = new AWSCloudFormation(awsSettings);
-                    awsCF.getAllStackEvents(cloudFormation.stackId, function (err, data) {
+                    awsCF.getAllStackEvents(cloudFormation.stackId, function(err, data) {
                         if (err) {
                             res.status(500).send({
                                 // message: "Failed to fetch stack events from aws ERROR: " + err.message
@@ -294,7 +328,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
                     }
 
                     var awsSettings;
-                    if(aProvider.isDefault) {
+                    if (aProvider.isDefault) {
                         awsSettings = {
                             "isDefault": true,
                             "region": cloudFormation.region
@@ -322,7 +356,7 @@ module.exports.setRoutes = function(app, sessionVerificationFunc) {
                         "region": cloudFormation.region,
                     };
                     var awsCF = new AWSCloudFormation(awsSettings);
-                    awsCF.listAllStackResources(cloudFormation.stackId, function (err, resources) {
+                    awsCF.listAllStackResources(cloudFormation.stackId, function(err, resources) {
                         if (err) {
                             logger.error("Unable to fetch provide", err);
                             message: err.message

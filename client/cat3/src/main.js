@@ -18,12 +18,7 @@ var angularApp = angular.module('catapp', ['ui.router','ngTouch','toastr',
 	'authentication',
 	'factory.appPermission',
 	'appPermission',
-	'dashboard.workzone',
-	'dashboard.help',
-	'dashboard.track',
-	'dashboard.settings',
-	'dashboard.design',
-    'dashboard.analytics',
+	'dashboard',
 	'directive.loading',
 	'ngSanitize',
 	'global.cache',
@@ -77,62 +72,43 @@ angularApp.run(['$rootScope', 'auth', '$state', '$stateParams',
 ]);
 
 angularApp.controller('HeadNavigatorCtrl', ['$scope', '$rootScope', '$http', '$log', '$location', '$window', 'auth', '$state', 'modulePermission', function ($scope, $rootScope, $http, $log, $location, $window, auth, $state, modulePerms) {
-    'use strict';
-    //global Scope Constant Defined;
-    $rootScope.app = $rootScope.app || {};
-    $rootScope.app.isDashboard = false;
-    $rootScope.appDetails = $rootScope.appDetails || {};
-    $rootScope.$on('SET_HEADER', function () {
-        //permission set is included to show/hide modules.
-        var _permSet = {
-            workzone: modulePerms.workzoneAccess(),
-            design: modulePerms.designAccess(),
-            settings: modulePerms.settingsAccess(),
-            track: modulePerms.trackAccess(),
-            analytics: modulePerms.analyticsAccess()
-        };
-        $rootScope.workZoneBool = _permSet.workzone;
-        $rootScope.designBool = _permSet.design;
-        $rootScope.settingsBool = _permSet.settings;
-        $rootScope.trackBool = _permSet.track;
-        $rootScope.analyticsBool = _permSet.analytics;
-    });
-    
-    $rootScope.$emit('SET_HEADER', $rootScope.appDetails);
-    $scope.showLogoutConfirmationSection = false;
-    $scope.logoutConfirmation = function () {
-        $scope.showLogoutConfirmationSection = true;
-    };
-    $scope.closeLogoutPanel = function () {
-        $scope.showLogoutConfirmationSection = false;
-    };
-    $scope.doLogout = function () {
-        auth.logout().then(function () {
-            $rootScope.app.isDashboard = false;
-            $rootScope.$emit('HIDE_BREADCRUMB');
-            $state.go('signin');
-        });
-        $scope.showLogoutConfirmationSection = false;
-    };
-    $rootScope.$on('USER_LOGOUT', function () {
-        $scope.doLogout();
-    });
-}])
-.controller('dashboardCtrl', ['$rootScope', '$scope', '$http', 'uac', '$location', '$state', function ($rootScope, $scope, $http, uac, $location, $state) {
-    'use strict';
-    $rootScope.isBreadCrumbAvailable = true;
-    $rootScope.app.isDashboard = true;
-    /*State will be dashboard if coming via login flow. So check permission and do default landing logic*/
-    /*Otherwise dont enable default landing logic. This is so that user can land on url directly*/
-    if ($state.current.name === 'dashboard') {
-        if ($rootScope.workZoneBool) {
-            $state.go('dashboard.workzone');
-        } else if ($rootScope.designBool) {
-            $state.go('dashboard.design');
-        } else if ($rootScope.trackBool) {
-            $state.go('dashboard.track');
-        } else if ($rootScope.settingsBool) {
-            $state.go('dashboard.settings');
-        }
-    }
+	'use strict';
+	//global Scope Constant Defined;
+	$rootScope.app = $rootScope.app || {};
+	$rootScope.app.isDashboard = false;
+	$rootScope.appDetails = $rootScope.appDetails || {};
+	$rootScope.$on('SET_HEADER', function () {
+		//permission set is included to show/hide modules.
+		var _permSet = {
+			workzone: modulePerms.workzoneAccess(),
+			design: modulePerms.designAccess(),
+			settings: modulePerms.settingsAccess(),
+			track: modulePerms.trackAccess(),
+			analyticsBool: modulePerms.analyticsBool()
+		};
+		$rootScope.workZoneBool = _permSet.workzone;
+		$rootScope.designBool = _permSet.design;
+		$rootScope.settingsBool = _permSet.settings;
+		$rootScope.trackBool = _permSet.track;
+		$rootScope.analyticsBool = _permSet.analyticsBool;
+	});
+	$rootScope.$emit('SET_HEADER', $rootScope.appDetails);
+	$scope.showLogoutConfirmationSection = false;
+	$scope.logoutConfirmation = function () {
+		$scope.showLogoutConfirmationSection = true;
+	};
+	$scope.closeLogoutPanel = function () {
+		$scope.showLogoutConfirmationSection = false;
+	};
+	$scope.doLogout = function () {
+		auth.logout().then(function () {
+			$rootScope.app.isDashboard = false;
+			$rootScope.$emit('HIDE_BREADCRUMB');
+			$state.go('signin');
+		});
+		$scope.showLogoutConfirmationSection = false;
+	};
+	$rootScope.$on('USER_LOGOUT', function () {
+		$scope.doLogout();
+	});
 }]);

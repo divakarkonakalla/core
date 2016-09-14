@@ -68,7 +68,7 @@ function getDefaultsConfig() {
             }
         },
         constantData: {
-            common_field: ['envId', 'providerId', 'orgId', 'bgId', 'projectId'],
+            common_field: ['envId', 'providerId', 'orgId', 'bgId','organizationId','businessGroupId', 'projectId','templateType','blueprintConfig.cloudProviderType','cloudProviderType'],
             sort_field: ['name', 'description'],
             filterReferanceData: {
                 "unmanagedInstances": [{
@@ -97,12 +97,17 @@ function getDefaultsConfig() {
                 "taskLogs":"timestampStarted",
                 "unassignedInstances":"state",
                 "unassignedInstances":"state",
-                "scripts":"name"
+                "scripts":"name",
+                "unassignedInstances":"state",
+                "chefNodes":"createdOn",
+                "blueprints":"name",
+                'compositeBlueprints':"name"
             },
             skip_Records : 1,
             max_record_limit : 200,
             record_limit : 50
         },
+        trackMenu:['Capacity','Providers','Health','Telemetry','CI/CD','Service Delivery'],
         puppet: {
             puppetReposDirName: 'puppet-repos',
 
@@ -226,6 +231,8 @@ function getDefaultsConfig() {
             appcard: false
         },
         maxInstanceCount: 0,
+        catalystEntityTypes: ['ORGANIZATION', 'BUSINESS_UNIT', 'PROJECT', 'PROVIDER_TYPE',
+            'PROVIDER', 'ENVIRONMENT', 'RESOURCE_TYPE', 'RESOURCE'],
 
         // cronjobTimeDelay: '"* * * * * *"',
 

@@ -11,48 +11,48 @@ var toPairs = require('lodash.topairs');
 var async = require('async');
 
 var DockerContainerSync = Object.create(CatalystCronJob);
-DockerContainerSync.interval = '*/5 * * * *';
+DockerContainerSync.interval = '*/2 * * * *';
 DockerContainerSync.execute = dockerContainerSync;
 
 module.exports = DockerContainerSync;
 
-function dockerContainerSync(){
-    MasterUtils.getAllActiveOrg(function(err, orgs) {
-        if(err) {
+function dockerContainerSync() {
+    MasterUtils.getAllActiveOrg(function (err, orgs) {
+        if (err) {
             logger.error(err);
-        }else if(orgs.length > 0){
-            for(var i = 0; i < orgs.length; i++){
-                (function(org){
-                    instancesDao.getInstancesWithContainersByOrgId(org.rowid, function(err, instances) {
-                        if(err) {
+            return;
+        } else if (orgs.length > 0) {
+            for (var i = 0; i < orgs.length; i++) {
+                (function (org) {
+                    instancesDao.getInstancesWithContainersByOrgId(org.rowid, function (err, instances) {
+                        if (err) {
                             logger.error(err);
                             return;
-                        }else if(instances.length > 0){
+                        } else if (instances.length > 0) {
                             var count = 0;
-                            for(var j = 0; j < instances.length; j++){
-                                (function(instance){
+                            for (var j = 0; j < instances.length; j++) {
+                                (function (instance) {
                                     count++;
                                     aggregateDockerContainerForInstance(instance)
                                 })(instances[j]);
                             }
-                            if(count === instances.length){
+                            if (count === instances.length) {
                                 return;
                             }
-                        }else{
-                            logger.info("There is no Instance in "+org.orgname+" Organization who have docker installed");
+                        } else {
+                            logger.info("There is no Instance in " + org.orgname + " Organization who have docker installed");
                             return;
                         }
                     });
-
                 })(orgs[i]);
             }
-
-        }else{
+        } else {
             logger.info("There is no Active Organization for Docker Container Sync");
             return;
         }
     });
-}
+};
+
 
 function aggregateDockerContainerForInstance(instance){
     logger.info("Docker Container Sync started for Instance IP "+instance.instanceIP);

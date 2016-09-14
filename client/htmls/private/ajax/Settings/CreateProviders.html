@@ -26,14 +26,14 @@
                                                             <select id="providertype" name="providerType" unique="true" uniqueconditionedby="orgname" class="chooseOrganization width-100" style="vertical-align: central" cat-validation="required" cdata="catalyst" skiprowid="yes" onchange="UtilityMethods.providerChanged($(this).val());">
                                                                 <option value="">Select Provider</option>
                                                                 <option value="AWS">AWS</option>
-                                                                <option value="OPENSTACK">OpenStack</option>
-                                                                <option value="VMWARE">VMware</option>
-                                                                <option value="AZURE">Azure</option>
+                                                                <option value="OPENSTACK">OPENSTACK</option>
+                                                                <option value="VMWARE">VMWARE</option>
+                                                                <option value="AZURE">AZURE</option>
                                                             </select>
                                                         </div>
                                                         <div class="col-lg-6 col-md-6">
                                                             <label for="">Name:<span style="color: Red;" class="control-label">&nbsp;*</span></label>
-                                                            <input name="providerName" placeholder="Enter Name of the Provider" id="name" class="form-control" type="text" cdata="catalyst" cat-validation="required" cat-validation-openstack="required" cat-validation-azure="required" cat-validation-vmware="required">
+                                                            <input name="providerName" placeholder="Enter Name of the Provider" id="name" class="form-control" type="text" cdata="catalyst" cat-validation="required,max15,nospace" cat-validation-openstack="required,max15,nospace" cat-validation-azure="required,max15,nospace" cat-validation-vmware="required,max15,nospace">
                                                         </div>
                                                     </div>
                                                     <div class="row foraws">
@@ -187,7 +187,7 @@
                                                     <div class="row forazure azureBlock">
                                                         <div class="col-lg-6 col-md-6 margintop20">
                                                             <label for="">Enter Subscription Id:<span style="color: Red;" class="control-label">&nbsp;*</span></label>
-                                                            <input name="azureSubscriptionId" id="azureSubscriptionId" class="form-control" type="text" cdata="catalyst" cat-validation-azure="required" placeholder="Enter the Subscription Id">
+                                                            <input name="azureSubscriptionId" id="azureSubscriptionId" class="form-control secretInfo" type="text" cdata="catalyst" cat-validation-azure="required" placeholder="Enter the Subscription Id">
                                                         </div>
                                                         <div class="col-lg-6 col-md-6 margintop20">
                                                             <label for="">Enter Client Id:<span style="color: Red;" class="control-label">&nbsp;*</span></label>
@@ -510,7 +510,7 @@
 
         $('#orgId').val(data.orgId[0]).attr({
             'answer': data.orgId[0]
-        }).select2();
+        }).select2().attr('disabled', 'disabled');
 
         $('#openstackendpointec2').val(data.serviceendpoints.ec2);
 
@@ -544,7 +544,7 @@
         $keyRow.find('input.fileAzureKey').val(data.keyFileName);
         $('#orgId').val(data.orgId[0]).attr({
             'answer': data.orgId[0]
-        }).select2();
+        }).select2().attr('disabled', 'disabled');
 
     }
 
@@ -560,7 +560,7 @@
         $('#providertype').val(data.providerType).select2();
         $('#orgId').val(data.orgId[0]).attr({
             'answer': data.orgId[0]
-        }).select2();
+        }).select2().attr('disabled', 'disabled');
 
         $('#openstackendpointec2').val(data.serviceendpoints.ec2);
 
@@ -580,7 +580,9 @@
     }
 
     function setValuesvmware(data) {
-        $('#providertype').val(data.providerType).select2();
+        $('.foraws').hide();
+        $('.forvmware').show();
+        $('#providertype').val(data.providerType.toUpperCase()).select2();
         $('#providertype').trigger('change');
         $('#name').val(data.providerName);
         $('#vmwareusername').val(data.username);
@@ -589,7 +591,7 @@
         $('#vmwaredc').val(data.dc);
         $('#orgId').val(data.orgId[0]).attr({
             'answer': data.orgId[0]
-        }).select2();
+        }).select2().attr('disabled', 'disabled');
 
     }
 
@@ -601,7 +603,7 @@
         $('#s3BucketName').val(data.s3BucketName);
         $('#orgId').val(data.orgId[0]).attr({
             'answer': data.orgId[0]
-        }).select2();
+        }).select2().attr('disabled', 'disabled');
         var createTemplateInstance = new createTemplate($('#appender'));
         for (var i = 0; i < data.keyPairs.length; i++) {
             if (i == 0) {
@@ -661,7 +663,7 @@
                 $vmwareInputs.attr('cat-validation-vmware', 'required');
                 $azureInputs.attr('cat-validation-azure', 'required');
                 $openStack.attr('cat-validation-openstack', 'required');
-
+               // loadKeyPair(null, null, false, region, providerId);
             } else {
 
                 $secretInfo.attr('disabled', 'disabled');
@@ -702,6 +704,14 @@
         }
         $('#myForm54').ajaxForm({
             beforeSubmit: function(arr, $form, options) {
+                if (location.toString().indexOf('?new') === -1) {
+                    var orgValue = $('#orgId').val();
+                    arr.push({name:'orgId',value:orgValue,type:'select-one',required:false})
+                }
+                if (location.toString().indexOf('?new') === -1 && $('#providertype').val() == 'AZURE') {
+                    var azureSubscriptionId = $('#azureSubscriptionId').val();
+                    arr.push({name:'azureSubscriptionId',value:orgValue,type:'text',required:false})
+                }
                 // return false to cancel submit
                 if ($('#providertype').val() == 'OPENSTACK' || $('#providertype').val() == 'HPPUBLICCLOUD') {
                     if (isFormValidOpenStack(null, 'cat-validation-openstack')) {
@@ -902,7 +912,7 @@
             var str = ' <option value="">Select Organization</option>',
                     len = data.length;
             for (var i = 0; i < data.length; i++) {
-                str = str + '<option value="' + data[i]._id + '">' + data[i].orgname + '</option>';
+                str = str + '<option value="' + data[i].rowid + '">' + data[i].orgname + '</option>';
             }
             $('#orgId').html(str);
             if ($('#orgId').attr('answer')) {

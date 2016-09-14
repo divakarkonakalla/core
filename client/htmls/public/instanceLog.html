@@ -14,6 +14,7 @@
 		<img class="center-block" style="height: 50px; width: 50px; margin-top: 20%; margin-left: 48%;margin-bottom: 10%; position: absolute;" src="img/loading.gif" />
 	</div>
 	<div class="tabContent table-responsive">
+		<h2 class="page-name">Instance Audit Trail Logs</h2>
 		<div class="dataTables_filter">
 			<label>Search:&nbsp;
 				<input type="search" id="table_filter_text" class="search" placeholder="">
@@ -37,11 +38,11 @@
 		<table class="table table-hover table-bordered text-center" id="instanceLogTable">
 			<thead>
 				<tr>
-					<th class="text-center">Instance</th>
-					<th class="text-center">Provider</th>
-					<th class="text-center">OS</th>
 					<th class="text-center table_sort sorting_desc" data-fieldname='createdOn'>Time
 					</th>
+					<th class="text-center">Instance</th>
+					<th class="text-center">Provider</th>
+					<th class="text-center">OS</th>		
 					<th class="text-center">Status</th>
 					<th class="text-center">Size</th>
 					<th class="text-center">User</th>
@@ -49,7 +50,7 @@
 					<th class="text-center">BU</th>
 					<th class="text-center">Project</th>
 					<th class="text-center">Env</th>
-					<th class="text-center">BluePrint</th>
+					<th class="text-center">Blueprint</th>
 					<th class="text-center">Action</th>
 					<th class="text-center">ActionStatus</th>
 					<th class="text-center">Log</th>
@@ -57,29 +58,29 @@
 			</thead>
 			<tbody class="instanceLogTrail"></tbody>
 		</table>
-		<div id="green">
-		</div>
-		<!--Modal popup to show the logs for selected instance action starts here-->
-		<div class="modal fade" id="instanceLogsModalContainer" tabindex="-1" style='z-index:1800' role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-backdrop="static">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-						<h4 class="modal-title" id="myModalLabel">
-							<i class="fa fa-bar-chart-o txt-color-blue"></i>&nbsp;&nbsp;Logs
-						</h4>
-					</div>
-					<div class="modal-body">
-						<div class="logsArea"></div>
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-					</div>
+		<div id="green"></div>
+	</div>
+	<!--Modal popup to show the logs for selected instance action starts here-->
+	<div class="modal fade" id="instanceLogsModalContainer" tabindex="-1" style='z-index:1800' role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-backdrop="static">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+					<h4 class="modal-title" id="myModalLabel">
+						<i class="fa fa-bar-chart-o txt-color-blue"></i>&nbsp;&nbsp;Logs
+					</h4>
+				</div>
+				<div class="modal-body">
+					<div class="logsArea"></div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 				</div>
 			</div>
 		</div>
-		<!--Modal popup to show the logs for selected inst.ance action ends here-->
-		<script>
+	</div>
+	<!--Modal popup to show the logs for selected inst.ance action ends here-->
+	<script>
 		$(document).ready(function(e) {
 			var pageSetting = {
 				page: 1,
@@ -91,7 +92,6 @@
 
 			var instanceLogsHandler = function(e) {
 				var instanceActionId = $(this).attr('data-id');
-				console.log(instanceActionId);
 				var timeout;
 				var $instanceLogModalContainer = $('#instanceLogsModalContainer');
 				$instanceLogModalContainer.on('hidden.bs.modal', function(e) {
@@ -105,8 +105,6 @@
 				var lastTimestamp;
 				//Showing the log for Instances
 				function pollLogs(timestamp, delay, clearData) {
-					console.log(timestamp);
-					console.log(delay);
 					var url = '/audit-trail/instance-action/' + instanceActionId+'/logs';
 					url = url + '?timestamp=' + timestamp;
 					timeout = setTimeout(function() {
@@ -119,31 +117,29 @@
 								$modalBody.empty();
 							}
 							var $table = $('<table></table>');
-							for (var i = 0; i < data.logs.length; i++) {
+							var logsLength = 0;
+							if(data.length > 300){
+								logsLength = 300;
+							}else{
+								logsLength = data.length;
+							}
+							for (var i = 0; i < logsLength; i++) {
 								var $rowDiv = $('<tr class="row rowSpacing"></tr>');
-								var timeString;
-								if(data.logs[i].timestamp){
-									timeString = new Date().setTime(data.logs[i].timestamp);
-								}
+								var timeString = new Date().setTime(data[i].timestamp);
 								var date = new Date(timeString).toLocaleString();
-								var logStr ="";
-								if(data.logs[i].log){
-									logStr = data.logs[i].log;
-								}
-								if (data.logs[i].err) {
+								var logStr =data[i].log;
+								if (data[i].err) {
 									$rowDiv.append($('<td class="col-lg-12 col-sm-12" style="color:red;"></td>').append('<span class="textLogs">' + date + '</span>' + '&nbsp;&nbsp;&nbsp;' + '<span>' + logStr + '</span>'));
 								} else {
 									$rowDiv.append($('<td class="col-lg-12 col-sm-12" style="color:DarkBlue;"></td>').append('<span class="textLogs">' + date + '</span>' + '&nbsp;&nbsp;&nbsp;' + '<span>' + logStr + '</span>'));
 								}
 								$table.append($rowDiv);
-								lastTimestamp = data.logs[i].timestamp;
-								if (data.logs[i]) {
-									$modalBody.append($table);
-									$modalBody.scrollTop($modalBody[0].scrollHeight + 100);
-								}
-							 }
+								lastTimestamp = data[i].timestamp;
+								$modalBody.append($table);
+								$modalBody.scrollTop($modalBody[0].scrollHeight + 100);
+							}
 							if ($instanceLogModalContainer.data()['bs.modal'].isShown) {
-								pollLogs(lastTimestamp, 10000, false);
+								pollLogs(lastTimestamp, 5000, false);
 							} else {
 								console.log('not polling again');
 							}
@@ -231,9 +227,12 @@
 					if(managnedData[i].platformId) {
 						instanceId = managnedData[i].platformId;
 					} else {
-						instanceId = managnedData[i].instanceId;
+						instanceId = managnedData[i].blueprintName;
 					}
 					var $tr = $('<tr class="instanceLogTrail"></tr>').attr('data-id', instanceId);
+					var createdOn = new Date(managnedData[i].createdOn).toLocaleString();
+					var $tdCreatedOn = $('<td></td>').append(createdOn);
+					$tr.append($tdCreatedOn);
 					var $tdInstanceId = $('<td></td>').append(instanceId);
 					$tr.append($tdInstanceId);
 					if (managnedData[i].providerType == 'aws') {
@@ -243,8 +242,12 @@
 					} else if (managnedData[i].providerType == 'openstack') {
 						$providerImg = $("<img class ='imgStyle' src = '../private/img/DevOps/openstack.png' alt='provider'/>");
 					} else if (managnedData[i].providerType == 'vmware') {
-						$providerImg = $("<img class ='imgStyle' src = '../private/img/DevOps/vmware.png' alt='provider'/>");
-					} else {
+						$providerImg = $("<img class ='imgStyle' src = '../private/img/vmware-card.png' alt='provider'/>");
+					} /*else if (managnedData[i].action == 'Imported From ChefServer') {
+						$providerImg = $("<img class ='imgStyle' src = '../private/img/chef.png' alt='provider'/>");
+					} else if (managnedData[i].action == 'Imported From Provider') {
+						$providerImg = $("<img class ='imgStyle' src = '../private/img/aws.png' alt='provider'/>");
+					}*/ else {
 						$providerImg = $("<img class ='imgStyle' src = '../private/img/rsz_logo.png' alt='provider'/>");
 					}
 					if (managnedData[i].platform == 'ubuntu') {
@@ -253,27 +256,39 @@
 						$osImg = $("<img class ='imgStyle' src = '../private/img/osIcons/centos.png' alt='OS'/>");
 					} else if (managnedData[i].platform == 'unknown') {
 						$osImg = $("<img class ='imgStyle' src = '../private/img/osIcons/linux.png' alt='OS'/>");
-					} else if (managnedData[i].os == 'linux' && managnedData[i].platform == 'unknown') {
-						$osImg = $("<img class ='imgStyle' src = '../private/img/osIcons/linux.png' alt='OS'/>");
 					} else if (managnedData[i].os == 'windows') {
 						$osImg = $("<img class ='imgStyle' src = '../private/img/osIcons/windows.png' alt='OS'/>");
-					} else if (managnedData[i].platform == 'openstack' && managnedData[i].os == 'linux') {
+					} else if (managnedData[i].platform == 'unknown') {
 						$osImg = $("<img class ='imgStyle' src = '../private/img/osIcons/linux.png' alt='OS'/>");
-					} else if (managnedData[i].platform == 'openstack' && managnedData[i].os == 'windows') {
-						$osImg = $("<img class ='imgStyle' src = '../private/img/osIcons/windows.png' alt='OS'/>");
+					} else if (managnedData[i].os == 'linux' && managnedData[i].platform == 'unknown') {
+						$osImg = $("<img class ='imgStyle' src = '../private/img/osIcons/linux.png' alt='OS'/>");
 					} else if (managnedData[i].platform == 'unknown' && managnedData[i].os == 'unknown') {
 						$osImg = $("<img class ='imgStyle' src = '../private/img/osIcons/linux.png' alt='OS'/>");
-					}else{
+					} else {
 						$osImg = $("<img class ='imgStyle' src = '../private/img/rsz_logo.png' alt='OS'/>");
 					}
 					var $tdProvider = $('<td></td>').append($providerImg);
 					$tr.append($tdProvider);
 					var $tdOs = $('<td></td>').append($osImg);
 					$tr.append($tdOs);
-					var createdOn = new Date(managnedData[i].createdOn).toLocaleString();
-					var $tdCreatedOn = $('<td></td>').append(createdOn);
-					$tr.append($tdCreatedOn);
-					var $tdStatus = $('<td></td>').append(managnedData[i].status);
+					if (managnedData[i].status == 'running') {
+						$tdStatus = $("<img title='running' class ='statusIcon' src = '../private/img/aws_logo_started.png' alt='statusType'/>");
+					} else if (managnedData[i].status == 'pending' || managnedData[i].status == 'unknown' || managnedData[i].status == 'waiting') {
+						$tdStatus = $("<img title='pending' class ='statusIcon' src = '../private/img/aws_iogo_inactive.png' alt='statusType'/>");
+					} else if (managnedData[i].status == 'stopping' || managnedData[i].status == 'paused') {
+						$tdStatus = $("<img title='stopping' class ='statusIcon' src = '../private/img/aws_logo_paused.png' alt='statusType'/>");
+					} else if (managnedData[i].status == 'stopped') {
+						$tdStatus = $("<img title='stopped' class ='statusIcon' src = '../private/img/aws_logo_stopped.png' alt='statusType'/>");
+					}else if (managnedData[i].status == 'terminated') {
+						$tdStatus = $("<img title='terminated' class ='statusIcon' src = '../private/img/aws_iogo_inactive.png' alt='statusType'/>");
+					}else if (managnedData[i].status == 'deleted') {
+						$tdStatus = $("<img title='deleted' class ='statusIcon' src = '../private/img/aws_iogo_inactive.png' alt='statusType'/>");
+					}else if (managnedData[i].status == 'shutting-down') {
+						$tdStatus = $("<img title='shutting-down' class ='statusIcon' src = '../private/img/aws_iogo_inactive.png' alt='statusType'/>");
+					}else {
+						$tdStatus = $("<img title='unknown' class ='statusIcon' src = '../private/img/aws_logo_stopped.png' alt='statusType'/>");
+					}
+					var $tdStatus = $('<td></td>').append($tdStatus);
 					$tr.append($tdStatus);
 					if (managnedData[i].size == 'unknown') {
 						var $tdSize = $('<td></td>').append('NA');
@@ -302,7 +317,16 @@
 					$tr.append($bluePrint);
 					var $tdData = $('<td></td>').append(managnedData[i].action);
 					$tr.append($tdData);
-					var $tdActionStatus = $('<td></td>').append(managnedData[i].actionStatus);
+					if (managnedData[i].actionStatus == 'success') {
+						$tdActionStatus = $("<img title='success' class ='statusIcon' src = '../private/img/aws_logo_started.png' alt='statusType'/>");
+					}else if (managnedData[i].actionStatus == 'pending' || managnedData[i].actionStatus == 'waiting') {
+						$tdActionStatus = $("<img title='pending' class ='statusIcon' src = '../private/img/aws_logo_paused.png' alt='statusType'/>");
+					}else if (managnedData[i].actionStatus == 'failed') {
+						$tdActionStatus = $("<img title='failed' class ='statusIcon' src = '../private/img/aws_logo_stopped.png' alt='statusType'/>");
+					}else {
+						$tdActionStatus = $("<img title='failed' class ='statusIcon' src = '../private/img/aws_logo_stopped.png' alt='statusType'/>");
+					}
+					var $tdActionStatus = $('<td></td>').append($tdActionStatus);
 					$tr.append($tdActionStatus);
 					var $logIcon = $("<a data-original-title='MoreInfo' class='moreInfoLog' data-placement='top' rel='tooltip' href='javascript:void(0)' data-toggle='modal' data-id=" + managnedData[i].actionId + "><img class='moreInfo' src = '../private/img/galleryIcons/moreinfo.png' alt='moreInfo'/></a>");
 					var $tdLog = $('<td></td>').append($logIcon);
@@ -312,7 +336,7 @@
 				}
 			}
 		});
-		</script>
+	</script>
 </body>
 
 </html>

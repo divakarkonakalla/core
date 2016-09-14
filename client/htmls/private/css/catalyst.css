@@ -2450,15 +2450,15 @@ hr {
     padding: 8px 17px 8px 54px !important;
 }
 .smart-style-1 nav ul ul li > span {} .smart-style-1 nav ul ul li > span {
-                                          color: #E1EAF1;
-                                          display: block;
-                                          font-size: 13px;
-                                          font-weight: 300;
-                                          padding-bottom: 6px !important;
-                                          padding-left: 43px;
-                                          padding-top: 6px !important;
-                                          text-shadow: 0 1px 1px #000000;
-                                      }
+  color: #E1EAF1;
+  display: block;
+  font-size: 13px;
+  font-weight: 300;
+  padding-bottom: 6px !important;
+  padding-left: 43px;
+  padding-top: 6px !important;
+  text-shadow: 0 1px 1px #000000;
+}
 .domain-roles-heading {
     font-size: 12px;
     height: 25px;
@@ -4133,7 +4133,7 @@ tr.selectedOne td a {
     margin-top: 50px;
     float: left;
     margin-left: 300px;
-    width: 396px;
+    width: 440px;
     color: black!important;
     border-color: #ebccd1;
     background-color: #fff!important;
@@ -4670,3 +4670,6 @@ input:focus, select:focus, textarea:focus {
     display: block;
 }
 
+.blueprintdiv-aws {
+    width:77%!important;
+}

@@ -200,7 +200,6 @@ $(document).ready(function() {
     $('.versionClass').hide();
     $('#selectOrgName').trigger('change');
     getTreeDetails();
-    initializeCompositeBP();
     if (isAngularIntegration) {
         $('#workZoneNew').attr('href', '#');
         $('#workZoneNew').removeClass('active');
@@ -996,18 +995,6 @@ $(document).ready(function() {
 
         $.get('/d4dMasters/readmasterjsonnew/16', function(data) {
             data = JSON.parse(data);
-            data.push({
-                _id: "54bde11187f86fa0130c7563",
-                templatetypename: "Composite",
-                designtemplateicon_filename: "Docker.png",
-                rowid: "b02de7dd-6101-4f0e-a95e-68d74cec86c0",
-                id: "16",
-                __v: 0,
-                active: true,
-                templatetype: "composite",
-                orgname_rowid: ["46d1da9a-d927-41dc-8e9e-7e926d927537"],
-                orgname: ["Phoenix"]
-            });
             var rowLength = data.length;
             var containerTemp = "";
             var selectedrow = false;
@@ -1055,7 +1042,7 @@ $(document).ready(function() {
                             getDesignTypeImg = '/d4dMasters/image/4fdda07b-c1bd-4bad-b1f4-aca3a3d7ebd9__designtemplateicon__Cloudformation.png';
                             break;
                         case "composite":
-                            getDesignTypeImg = 'img/composite.png';
+                            getDesignTypeImg = '/d4dMasters/image/ba52a37d-c1e4-47bd-9391-327a95008a61__designtemplateicon__composite.png';
                             break;
                     }
                     getDesignTypeRowID = data[i]['rowid'];
@@ -1758,6 +1745,10 @@ var saveblueprint = function(tempType) {
                                     //for getting the blueprint name
                                     $blueprintReadContainerCFT.find('.modal-body #blueprintNameCFT').val(data.name);
                                     $blueprintReadContainerCFT.find('.modal-body #blueprintTemplateTypeCFT').val(data.templateType);
+                                    if (!data.version) {
+                                        data.version = "1";
+                                    }
+                                    $blueprintReadContainerCFT.find('.modal-body #instanceVersion').val(data.version);
                                     getOrgProjBUComparison(data, $blueprintReadContainerCFT);
                                 });
                             }
@@ -2925,8 +2916,10 @@ function initializeCompositeBP() {
     var $containerCompoTemp = "";
     $containerCompoTemp = '<div class="panel panel-default blueprintContainer hidden">' + '<div class="panel-heading">' + '<h4 class="panel-title">' + '<a href="#collapseCompo" data-parent="#accordion-3" data-toggle="collapse" class="collapsed"> ' + '<i class="fa fa-fw fa-plus-circle txt-color-blue"></i> ' + '<i class="fa fa-fw fa-minus-circle txt-color-red"></i>Composite</a>' + '</h4></div><div class="panel-collapse collapse bpeditas" id="collapseCompo">' + '<div class="panel-body composite"></div>' + '</div>';
     $('#accordion-3').append($containerCompoTemp);
-
-    $.get('../composite-blueprints', function(compositeData) {
+    var orgId = $("#orgnameSelectExisting option:selected").val();
+    var bgId = $('#bgListInputExisting option:selected').val();
+    var projId = $('#projectListInputExisting option:selected').val();
+    $.get('../composite-blueprints?filterBy=organizationId:'+orgId+'+businessGroupId:'+bgId+'+projectId:'+projId, function(compositeData) {
         if (compositeData && compositeData.compositeBlueprints) {
             for (var j = 0; j < compositeData.compositeBlueprints.length; j++) {
                 addBlueprintToComposite(compositeData.compositeBlueprints[j]);
@@ -3348,10 +3341,10 @@ function addBlueprintToDom(data) {
 function removeSelectedBlueprint() {
 
     var blueprintId = [];
-    var compositeBlueprintId = '';
+    var compositeBlueprintId = [];
     $('.productdiv1.role-Selected1').each(function() {
         blueprintId.push($(this).find('button[title="Edit"]').first().attr('blueprintId'));
-        compositeBlueprintId = $(this).find('button[title="Edit"]').attr('data-blueprintId');
+        compositeBlueprintId.push($(this).find('button[title="Edit"]').attr('data-blueprintId'));
     });
 
     if (blueprintId.length > 0 || compositeBlueprintId.length > 0) {
@@ -3360,15 +3353,17 @@ function removeSelectedBlueprint() {
                 return;
             } else {
                 var url1 = '/blueprints';
-                var url2 = '/composite-blueprints/' + compositeBlueprintId;
+                var url2 = '/composite-blueprints/delete';
                 var data1 = {
                     blueprints: blueprintId
                 };
-                var data2 = compositeBlueprintId;
+                var data2 = {
+                    compositeBlueprints: compositeBlueprintId
+                };
                 $.ajax({
                     url: (blueprintId[0] !=undefined)  ? url1 : url2,
                     data: (blueprintId[0] !=undefined) ? data1 : data2,
-                    type: 'DELETE',
+                    type: (blueprintId[0] !=undefined) ? 'DELETE' : 'POST',
                     success: function(data) {
                         if (data) {
                             var $bcc = $('.productdiv1.role-Selected1').closest('.blueprintContainer');

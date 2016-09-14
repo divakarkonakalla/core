@@ -22,9 +22,9 @@
 			//return uac.hasPermission('track','read','module');
 			return true;
 		};
-                this.analyticsAccess = function() {
+		this.analyticsBool = function() {
 			//permission response not available in the api response.
-			//return uac.hasPermission('analytics','read','module');
+			//return uac.hasPermission('track','read','module');
 			return true;
 		};
 	}]);

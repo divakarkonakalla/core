@@ -16,8 +16,11 @@
 var mongoose = require('mongoose');
 var util = require('util');
 var Schema = mongoose.Schema;
+var mongoosePaginate = require('mongoose-paginate');
+var logger = require('_pr/logger')(module);
 
 //@TODO Unique validation for name to be added
+//@TODO Get methods to be consolidated
 var CompositeBlueprintSchema = new Schema({
     name: {
         type: String,
@@ -39,6 +42,11 @@ var CompositeBlueprintSchema = new Schema({
         required: true,
         trim: false
     },
+    cloudProviderType:{
+        type: String,
+        required: false,
+        trim: false
+    },
     blueprints: [{
         type: Schema.Types.Mixed,
         _id: false
@@ -49,6 +57,8 @@ var CompositeBlueprintSchema = new Schema({
         default: false
     }
 });
+
+CompositeBlueprintSchema.plugin(mongoosePaginate);
 
 CompositeBlueprintSchema.statics.createNew = function createNew(data, callback) {
     var self = this;
@@ -77,11 +87,25 @@ CompositeBlueprintSchema.statics.getById = function getById(compositeBlueprintId
     );
 };
 
-CompositeBlueprintSchema.statics.getAll
-    = function getAll(query, callback) {
+CompositeBlueprintSchema.statics.countByQuery = function countByQuery(query, callback) {
     query.isDeleted = false;
 
-    this.find(query,
+    this.count(
+        query,
+        function(err, resultCount) {
+            if (err) {
+                return callback(err, null);
+            } else {
+                return callback(null, resultCount);
+            }
+        }
+    );
+};
+
+CompositeBlueprintSchema.statics.getAll = function getAll(filter, callback) {
+    filter.queryObj.isDeleted = false;
+
+    this.paginate(filter.queryObj, filter.options,
         function(err, compositeBlueprints) {
             if (err) {
                 logger.error(err);
@@ -108,6 +132,22 @@ CompositeBlueprintSchema.statics.deleteById = function deleteById(compositeBluep
     )
 };
 
+CompositeBlueprintSchema.statics.deleteAll = function deleteAll(compositeBlueprintIds, callback) {
+    this.update(
+        {'_id': {$in: compositeBlueprintIds}},
+        { $set: {isDeleted: true}},
+        {multi: true},
+        function(err, compositeBlueprintIds) {
+            if(err) {
+                logger.error(err);
+                return callback(err, null);
+            } else {
+                return callback(null, true);
+            }
+        }
+    )
+};
+
 CompositeBlueprintSchema.statics.updateById
     = function updateById(compositeBlueprintId, fields, callback) {
     this.update(
@@ -121,6 +161,19 @@ CompositeBlueprintSchema.statics.updateById
             }
         }
     );
+};
+
+CompositeBlueprintSchema.statics.getCompositeBlueprintByOrgBgProject
+    = function getCompositeBlueprintByOrgBgProject(query, callback) {
+    query.queryObj.isDeleted = false;
+    this.paginate(query.queryObj, query.options, function(err, compositeBlueprints) {
+        if (err) {
+            logger.error("Failed to getCompositeBlueprintByOrgBgProject", err);
+            callback(err, null);
+            return;
+        }
+        callback(null, compositeBlueprints);
+    });
 };
 
 var CompositeBlueprints = mongoose.model('compositeBlueprints', CompositeBlueprintSchema);

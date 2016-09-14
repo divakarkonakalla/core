@@ -1,3 +1,29 @@
+3.3.0 - August 11th , 2016
+----------------------------
+* Composite blueprints enhancements
+* Audit log trail implementation
+* Script executor implementation
+* Chef node import improvements
+* Critical Bug Fixes
+
+3.2.1 - July 8th , 2016
+----------------------------
+* Composite blueprints implementation - To design and launch a complete application stack
+* Critical Bug Fixes
+
+3.1.0 - June 14th, 2016
+----------------------------
+* Improved GUI with AngularJS
+* Script Executor to enbale execution of shell scripts on selected instances
+* Role based discovery of instances
+* RDS and S3 Report from AWS Account
+
+3.0.6 - May 10th, 2016
+----------------------------
+* Update AWS tags from Catalyst
+* Instance Level Cost and Usage Dashboards
+* Option to edit and clone blueprints
+* Attribute Editor for Blueprints
 
 3.0.5 - April 15th, 2016
 ----------------------------

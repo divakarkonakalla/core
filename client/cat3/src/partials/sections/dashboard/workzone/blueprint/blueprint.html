@@ -13,7 +13,7 @@
             <div class="alert alert-info text-center" ng-show="blueprints.length===0">
                 No Blueprints Available
             </div>
-            <div class="container" ng-init="getAllCompsiteBlueprint();">
+            <div class="container">
                 <accordion>
                     <div ng-if="blueprints.software_stack.length>0">
                         <accordion-group ng-init="accGroupStatus = {opened: isFirstOpen}" is-open="accGroupStatus.opened">
@@ -248,7 +248,7 @@
                         <accordion-group ng-init="accGroupStatus = {opened: false}" is-open="accGroupStatus.opened">
                             <accordion-heading>
                                 <i class="fa fa-fw" ng-class="{'fa-minus-circle red':accGroupStatus.opened,'fa-plus-circle':!accGroupStatus.opened }"></i>
-                                Composite Blueprint
+                                Composite
                             </accordion-heading>
                             <div class="productdiv4" ng-repeat="compBlue in compositeBlueprints">
                                 <div class="productdiv1 cardimage role-Selected1" data-templatetype="compositeBlueprint">
