@@ -4,6 +4,7 @@
 	position: fixed;
 	width: 254px;
 	z-index: 3;
+	font-size: 12px;
 
 	#navigPage-inner {
 		background: linear-gradient(to right, #2c3638 99%, #2c3638 100%);
@@ -13,74 +14,18 @@
 		overflow-y: auto;
 	}
 
-	div[data-analytics-tree-view] {
-		color: #fff;
-		font-size: 12px;
-		font-family: "Open Sans", Arial, Helvetica, Sans-Serif;
+	.tree-ul {
+		padding-left: 15px;
 	}
 
-	div[data-analytics-tree-model] li .selected {
-		padding: 0px;
-	}
-
-	div[data-analytics-tree-model] li i {
-		cursor: pointer;
-	}
-
-	div[data-analytics-tree-model] li span:hover {
-		text-decoration: underline;
-	}
-
-	div[data-analytics-tree-model] li {
+	.liContents {
 		line-height: 2.2;
-		padding: 0;
-	}
-		
-	div[data-analytics-tree-model] ul {
-		margin-left:-50px;
-		ul {
-			margin-left:-60px;
-			ul {
-				margin-left:-70px;
-				ul {
-					margin-left:-80px;
-				}
-			}
-		}
-	}
-
-	div[data-analytics-tree-model] .liContents {
-		margin-left: 20px;
-		.liContents  {
-			margin-left: 30px;
-			.liContents {
-				margin-left: 40px;
-				.liContents {
-					margin-left: 50px;
-				}
-			}
-		}
-	}
-
-	div[data-analytics-tree-model] li.selected{
-		background:#3b4142;
-	}
-
-	.collapse-spacing {
-		padding-right: 10px;
-	}
-
-	.label-spacing {
-		padding-right: 5px;
-	}
-
-	.caret-spacing {
-		margin-top: 8px;
 	}
 
 	i {
 		color:#fff;
 	}
+
 	span {
 		color:#fff;
 	}
