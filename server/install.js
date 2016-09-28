@@ -67,6 +67,17 @@ function getDefaultsConfig() {
                 return config.catalystHome + this.cookbooksDirName + "/";
             }
         },
+        settingWizardSteps:[{name :'Introduction',isCompleted:true},
+            {name :'Org Configuration',isCompleted:false,mandatoryCheck:true,nestedSteps:[{name:'Organization',isCompleted:false,mandatoryCheck:true},
+                {name :'BusinessGroup',isCompleted:false,mandatoryCheck:true},{name:'Project',isCompleted:false,mandatoryCheck:true}]},
+            {name :'Config Management',isCompleted:false,mandatoryCheck:true,nestedSteps:[{name:'ChefServer',isCompleted:false,mandatoryCheck:true},{name:'Environment',isCompleted:false,mandatoryCheck:true},{name:'Teams',isCompleted:false,mandatoryCheck:true}]},
+            {name :'Provider Configuration',isCompleted:false,mandatoryCheck:true,nestedSteps:[{name:'Provider',isCompleted:false,mandatoryCheck:true},{name:'VMImage',isCompleted:false,mandatoryCheck:true}]},
+            {name :'Gallery Setup',isCompleted:false,mandatoryCheck:false,nestedSteps:[{name:'Templates',isCompleted:false,mandatoryCheck:false},{name:'ServiceCommand',isCompleted:false,mandatoryCheck:false},{name:'ScriptGallery',isCompleted:false,mandatoryCheck:false}]},
+            {name :'Devops Roles',isCompleted:false,mandatoryCheck:false,nestedSteps:[{name:'Nexus',isCompleted:false,mandatoryCheck:false},{name:'Docker',isCompleted:false,mandatoryCheck:false},{name:'Jenkins',isCompleted:false,mandatoryCheck:false}]},
+            {name :'CMDB Configuration',isCompleted:false,mandatoryCheck:false}
+        ],
+        serviceControllerKey:'ZDQ2YWM3ZTUyZDhhZjhhOWRkMWQ2ZTc3NDhhNjk1OWEyYzgxZGJkMWVjYjA3ZThiZjY0NTBjYjBjMTM5YzA0Yg',
+        serverControllerUrl:'stackstorm.rlcatalyst.com',
         constantData: {
             common_field: ['envId', 'providerId', 'orgId', 'bgId','organizationId','businessGroupId', 'projectId','templateType','blueprintConfig.cloudProviderType','cloudProviderType'],
             sort_field: ['name', 'description'],
@@ -101,7 +112,8 @@ function getDefaultsConfig() {
                 "unassignedInstances":"state",
                 "chefNodes":"createdOn",
                 "blueprints":"name",
-                'compositeBlueprints':"name"
+                "compositeBlueprints":"name",
+                "containerLogs":"createdOn"
             },
             skip_Records : 1,
             max_record_limit : 200,
@@ -202,7 +214,7 @@ function getDefaultsConfig() {
             },
 
             cwMetricsDisplayUnits: {
-                CPUUtilization: 'Percent',
+                CPUUtilization: '%',
                 DiskReadOps: 'Count',
                 DiskWriteOps: 'Count',
                 DiskReadBytes: 'MB',
